@@ -6,10 +6,6 @@ export const UserCard = ({
     name,
     username,
     email,
-    address,
-    phone,
-    website,
-    company,
   },
   ...props
 }) => (

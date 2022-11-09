@@ -10,13 +10,16 @@ export class FetchDataFactoryService {
   }
 
   async get() {
-    if (this.route in this.store) {
-      console.log(this.store);
+    try {
+      if (!(this.route in this.store)) {
+        const data = await this.service.get();
+        this.store.saveNewData(this.route, data);
+      }
       return this.store[this.route];
-    } else {
-      const data = await this.service.get();
-      console.log(data);
-      this.store.saveNewData(this.route, data);
-    }
+    } catch (e) {}
+  }
+
+  abort() {
+    this.service.abort();
   }
 }

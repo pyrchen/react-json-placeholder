@@ -1,30 +1,86 @@
 import axios from 'axios';
 
-export class JsonPlaceholderService {
-  INITIAL_URL = 'https://jsonplaceholder.typicode.com';
-  url = this.INITIAL_URL;
-  route = '';
+class SingleService {
+  constructor(
+    url,
+    limit = 10,
+    page = 1,
+    totalPages = 1,
+  ) {
+    this.url = url;
+    this.limit = limit;
+    this.page = page;
+    this.totalPages = totalPages;
 
-  constructor(route, query) {
-    if (!route || typeof route !== 'string' || route[0] !== '/') {
-      throw new Error('Incorrect route was provided');
-    }
-    this.route = route;
-    this.url += route;
-    if (query) {
-      const queryString = new URLSearchParams(query);
-      this.url += '?' + queryString;
-    }
-  }
+    this.isDataBeingFetched = false;
+    this.isFirstLoaded = false;
 
-  get(newQueryParams) {
-    if (newQueryParams) {
-      const queryString = new URLSearchParams(newQueryParams);
-      this.url = this.INITIAL_URL + this.route + '?' + queryString;
-    }
-    return axios.get(this.url).then((res) => {
-      if (Array.isArray(res.data)) return res.data;
-      return [res.data];
-    });
+    this.controller = new AbortController();
   }
 }
+
+class JsonPlaceholderServiceClass {
+  _SERVICE_URL = 'https://jsonplaceholder.typicode.com';
+  services = {};
+
+  async get(route) {
+    const service = this.services[route] || this._createService(route);
+    if (service.isFirstLoaded && service.totalPages <= service.page) {
+      return this._resp(route, [])
+    }
+    service.isDataBeingFetched = true;
+    const response = await axios.get(service.url, {
+      signal: service.controller.signal,
+      params: {
+        _page: service.page,
+        _limit: service.limit,
+      },
+    });
+    service.isFirstLoaded = true;
+    service.isDataBeingFetched = false;
+    service.totalPages = Math.ceil(response.headers['x-total-count'] / service.limit);
+    return this._resp(route, response.data);
+  }
+
+  async loadMore(route) {
+    const service = this.services[route] || this._createService(route);
+    service.isDataBeingFetched = true;
+    const response = await axios.get(service.url, {
+      signal: service.controller.signal,
+      params: {
+        _page: ++service.page,
+        _limit: service.limit,
+      },
+    });
+    service.isDataBeingFetched = false;
+    return this._resp(route, response.data);
+  }
+
+  abort(route) {
+    if (this.services[route]) {
+      this.services[route].controller.abort();
+    }
+  }
+
+  _createService(route) {
+    this.services[route] = new SingleService(this._SERVICE_URL + route);
+    return this.services[route];
+  }
+
+  _toArray(data) {
+    return Array.isArray(data) ? data : [data];
+  }
+
+  _resp(route, data) {
+    const { totalPages, page, isFirstLoaded } = this.services[route];
+    return {
+      items: this._toArray(data),
+      page: page,
+      totalPages, isFirstLoaded,
+    };
+  }
+}
+
+const JsonPlaceholderService = new JsonPlaceholderServiceClass();
+
+export { JsonPlaceholderService };

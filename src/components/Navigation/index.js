@@ -4,9 +4,6 @@ import {
   Drawer,
   IconButton,
   List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon, ListItemText,
   Switch,
   Toolbar,
   Typography
@@ -73,6 +70,9 @@ const MyDrawer = styled(Drawer, { shouldForwardProp: (prop) => prop !== 'open' }
 const MyAppBar = styled(AppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
+  flexDirection: 'row',
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(['width', 'margin'], {
     easing: theme.transitions.easing.sharp,
