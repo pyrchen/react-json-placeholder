@@ -1,11 +1,12 @@
-import {PostCard} from './shared/Post.card';
-import {UserCard} from './shared/User.card';
-import {AlbumCard} from './shared/Album.card';
-import {PhotoCard} from './shared/Photo,card';
-import {CommentCard} from './shared/Comment.card';
-import {TodoCard} from './shared/Todo.card';
+import {PostCard} from './Post.card';
+import {UserCard} from './User.card';
+import {AlbumCard} from './Album.card';
+import {PhotoCard} from './Photo,card';
+import {CommentCard} from './Comment.card';
+import {TodoCard} from './Todo.card';
 
-export const CardWrapper = ({ id, item, ...props }) => {
+export const CardSwitcher = ({ id, item, ...props }) => {
+  // console.log(item);
   switch (id) {
     case 'posts' : return <PostCard item={item} {...props} />;
     case 'users' : return <UserCard item={item} {...props} />;

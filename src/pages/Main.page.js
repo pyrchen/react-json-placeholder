@@ -1,16 +1,15 @@
 import {useCallback, useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {observer} from 'mobx-react-lite';
-import {CardWrapper} from '../components/Card';
 import {jsonpStore} from '../store/jsonp.store';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import {Typography} from '@mui/material';
+import {Cards} from '../components/Cards';
+import {Filter} from '../components/Filter';
 
 export const MainPage = observer(() => {
   const { id } = useParams();
   const StoreItem = jsonpStore.getData(id);
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState(StoreItem.items || null);
+  const [items, setItems] = useState(StoreItem.filteredItems || null);
 
   const loadData = useCallback(async () => {
     const newData = await jsonpStore.fetchData('/' + id);
@@ -24,8 +23,11 @@ export const MainPage = observer(() => {
 
   useEffect(() => {
     const data = jsonpStore.getData(id);
+    if (data) {
+      jsonpStore.active = id;
+      setItems(data.filteredItems);
+    }
     if (data?.isFirstLoaded) return;
-    setItems(data?.items || []);
     setLoading(true);
     loadData()
       .catch((e) => {
@@ -48,21 +50,18 @@ export const MainPage = observer(() => {
 
 
   return <div id="main-page">
-    <InfiniteScroll
-      next={loadMoreData}
+    <Filter
+      value={StoreItem.filterString || ''}
+      onInput={(e) => {
+        // console.log(e.target.value);
+        StoreItem.filterString = e.target.value;
+      }}
+    />
+    <Cards
+      id={id}
+      items={items}
+      loadMore={loadMoreData}
       hasMore={StoreItem.page < StoreItem.totalPages}
-      loader={<Typography component="h4">Loading..</Typography>}
-      dataLength={items.length}
-    >
-    {
-      items.map((item) => (
-        <CardWrapper
-          style={{ marginBottom: '15px' }}
-          key={item.id}
-          id={id}
-          item={item}
-        />))
-    }
-    </InfiniteScroll>
+    />
   </div>;
 });
